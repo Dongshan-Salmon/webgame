@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿瓦隆</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        :root {
+            --primary-bg: #f0f2f5; --container-bg: #ffffff; --section-bg: #fdfdfd;
+            --text-color: #333; --title-color: #3d3b3b; --brand-color: #8b4513;
+            --brand-hover: #a0522d; --success-color: #4CAF50; --success-hover: #45a049;
+            --fail-color: #f44336; --pending-color: #ccc; --disabled-color: #cccccc;
+            --warning-color: #ff9800; --warning-hover: #fb8c00;
+            --border-color: #e0e0e0; --shadow-color: rgba(0,0,0,0.08); --info-bg: #e9f5ff;
+            --good-bg: #e8f5e9; --evil-bg: #ffebee; --good-color: #2e7d32; --evil-color: #c62828;
+            --marker-good: #29b6f6; --marker-evil: #ef5350;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--primary-bg); color: var(--text-color); margin: 0; padding: 15px;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; line-height: 1.6;
+        }
+        .container { max-width: 1100px; width: 100%; background: var(--container-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px var(--shadow-color); }
+        h1, h2, h3, h4 { color: var(--title-color); margin-top: 0; }
+        .hidden { display: none !important; }
+        button { background-color: var(--brand-color); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; transition: all 0.2s ease; }
+        button:hover { background-color: var(--brand-hover); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        button:disabled { background-color: var(--disabled-color); cursor: not-allowed; transform: none; box-shadow: none; }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #5a6268; }
+        button.danger { background-color: var(--fail-color); }
+        button.danger:hover { background-color: #d32f2f; }
+        button.success { background-color: var(--success-color); }
+        button.success:hover { background-color: var(--success-hover); }
+        button.warning { background-color: var(--warning-color); }
+        button.warning:hover { background-color: var(--warning-hover); }
+        input[type="text"], input[type="password"], input[type="number"], select { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; font-size: 16px; transition: box-shadow 0.3s ease, border-color 0.3s ease; }
+        input:focus, select:focus { border-color: var(--brand-color); box-shadow: 0 0 8px rgba(139, 69, 19, 0.2); outline: none; }
+        .input-group { margin-bottom: 20px; }
+        .section { background: var(--section-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        
+        #landing-section { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .landing-header { text-align: center; margin-bottom: 30px; }
+        .landing-header h1 { color: var(--brand-color); border: none; font-size: 2.5rem; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+        .landing-main { display: grid; grid-template-columns: 2fr 1.2fr; gap: 30px; }
+        .login-panel { background: var(--section-bg); padding: 30px; border-radius: 8px; }
+        .login-panel .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--title-color); }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .button-group button { width: 100%; }
+        #create-room-btn { background-color: var(--success-color); }
+        #create-room-btn:hover { background-color: var(--success-hover); }
+        .patch-notes-panel { background: var(--info-bg); padding: 25px; border-radius: 8px; border-left: 4px solid var(--brand-color); }
+        .patch-notes-panel h2 { border-bottom: 2px solid var(--brand-hover); font-size: 1.2rem; color: var(--title-color); display: flex; align-items: center; }
+        .patch-notes-panel h2 i { margin-right: 10px; }
+        .patch-notes-panel ul { list-style: none; padding-left: 5px; margin-top: 15px; }
+        .patch-notes-panel li { margin-bottom: 12px; color: #333; line-height: 1.5; }
+        .landing-footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.85rem; color: #777; }
+
+        #lobby-section { animation: fadeIn 0.5s ease; }
+        .lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .lobby-header h2 { border: none; }
+        .lobby-header p { background-color: var(--info-bg); padding: 8px 12px; border-radius: 8px; font-weight: 500; }
+        .lobby-header strong { color: var(--brand-color); cursor: pointer; }
+        .lobby-main-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px; }
+        .player-list-container h3 { margin-bottom: 15px; }
+        .player-list-item { display: flex; align-items: center; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff; border: 1px solid var(--border-color); transition: box-shadow 0.2s; }
+        .player-list-item.sortable-ghost { background: var(--info-bg); }
+        .player-list-item.host-view { cursor: grab; }
+        .player-list-item.host-view:active { cursor: grabbing; }
+        .player-order { font-weight: bold; color: var(--brand-color); margin-right: 15px; width: 20px; text-align: center; }
+        .player-name { flex-grow: 1; font-weight: 500; }
+        .player-name .fa-crown { color: #f9a825; margin-right: 5px; }
+        .player-status { font-size: 0.9rem; }
+        .player-status.ready { color: var(--success-color); }
+        .player-status.not-ready { color: #888; }
+        .player-actions { display: flex; gap: 5px; }
+        .player-actions button { padding: 4px 8px; font-size: 12px; }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .settings-panel h4 { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 15px; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success-color); }
+        input:disabled + .slider { background-color: #e0e0e0; cursor: not-allowed; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .role-selection-panel h4, .mission-track-panel h4 { margin-top: 25px; }
+        .role-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .role-pool { border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; min-height: 100px; }
+        .role-pool h5 { text-align: center; margin-bottom: 10px; }
+        .role-tag { padding: 6px 10px; border-radius: 15px; margin: 4px; display: inline-block; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .role-tag:hover { transform: scale(1.05); }
+        .role-tag.good { background: var(--good-bg); color: var(--good-color); }
+        .role-tag.evil { background: var(--evil-bg); color: var(--evil-color); }
+        .role-tag.disabled { background: #eee; color: #999; cursor: not-allowed; opacity: 0.7; }
+        .lobby-footer { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #f9f9f9; border-radius: 8px; margin-top: 10px; }
+        .footer-player-count { font-weight: bold; }
+        .footer-actions button { margin-left: 15px; }
+        .lobby-quest-track { display: flex; justify-content: space-around; align-items: center; padding: 10px 0; }
+        .lobby-quest-marker { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--pending-color); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; }
+        .lobby-quest-marker input { width: 100%; height: 100%; text-align: center; border: none; background: transparent; font-size: 1.2rem; font-weight: bold; color: var(--brand-color); border-radius: 50%; }
+        .lobby-quest-marker input:focus { outline: none; box-shadow: 0 0 0 2px var(--brand-color); }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        #game-section { animation: fadeIn 0.5s ease; }
+        .game-main-grid { display: grid; grid-template-columns: 1.2fr 2fr 1.2fr; gap: 20px; }
+        .game-player-list .player-item { display: flex; align-items: center; padding: 10px; border-radius: 8px; margin-bottom: 8px; background: #fff; border: 1px solid var(--border-color); }
+        .game-player-list .player-name { flex-grow: 1; font-weight: 500; }
+        .game-player-list .fa-crown { color: #f9a825; margin-right: 5px; }
+        .game-player-list .fa-gavel { color: var(--brand-color); margin-left: 8px; }
+        .player-marker { display: flex; gap: 4px; margin-left: auto; }
+        .player-marker .marker-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .player-marker .marker-btn.good { background-color: var(--marker-good); }
+        .player-marker .marker-btn.evil { background-color: var(--marker-evil); }
+        .player-marker .marker-btn.selected { border-color: #333; transform: scale(1.1); }
+        .game-info-panel .role-info { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .all-roles-display { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .all-roles-display .role-list { padding: 10px; border-radius: 8px; }
+        .all-roles-display .role-list.good { background: var(--good-bg); }
+        .all-roles-display .role-list.evil { background: var(--evil-bg); }
+        .all-roles-display h5 { margin: 0 0 8px 0; }
+        .all-roles-display ul { list-style: none; padding: 0; margin: 0; }
+        .game-logs-panel .log-container { margin-bottom: 15px; }
+        .game-logs-panel h4 { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+        .game-logs-panel .log-content { max-height: 120px; overflow-y: auto; font-size: 0.9rem; padding-right: 5px; }
+        .log-content p { margin: 0 0 5px 0; }
+        .game-mission-track { display: flex; justify-content: space-around; align-items: center; padding: 10px 0; }
+        .game-quest-marker { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 1.1rem; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .game-quest-marker.success { background: var(--success-color); }
+        .game-quest-marker.fail { background: var(--fail-color); }
+        .game-quest-marker.pending { background: var(--pending-color); }
+        .game-action-panel { grid-column: 1 / -1; text-align: center; }
+        .action-buttons button { margin: 5px; }
+        .checkbox-group label { display: inline-block; margin: 5px 10px 5px 0; cursor: pointer; }
+        .checkbox-group label span { display: inline-block; padding: 8px 12px; border: 1px solid #ccc; border-radius: 20px; transition: all 0.2s; }
+        .checkbox-group input { display: none; }
+        .checkbox-group input:checked + span { background-color: var(--brand-color); color: white; border-color: var(--brand-color); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 90%; width: 400px; }
+        .player-name.disconnected { color: #999; font-style: italic; text-decoration: line-through; }
+        .player-status.disconnected::before { content: '❌ '; color: var(--fail-color); }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; color: var(--brand-color); font-weight: bold;
+        }
+        
+        @media (max-width: 1000px) { .game-main-grid { grid-template-columns: 1fr 1fr; } .game-players-panel { grid-row: 1; grid-column: 1; } .game-info-panel { grid-row: 1; grid-column: 2; } .game-logs-panel { grid-row: 2; grid-column: 1 / -1; } }
+        @media (max-width: 768px) { .landing-main, .lobby-main-grid, .game-main-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <span>正在重新連線中...</span>
+    </div>
+
+    <div class="container">
+        <div id="landing-section">
+            <header class="landing-header">
+                <h1>阿瓦隆</h1>
+            </header>
+            <main class="landing-main">
+                <div class="login-panel">
+                    <div class="input-group">
+                        <label for="player-name">玩家名稱</label>
+                        <input type="text" id="player-name" placeholder="請輸入您的遊戲暱稱">
+                    </div>
+                    <div class="input-group">
+                        <label for="room-code">房間號碼</label>
+                        <input type="text" id="room-code" placeholder="留空可隨機加入公開房間">
+                    </div>
+                    <div class="button-group">
+                        <button id="join-room-btn">加入房間</button>
+                        <button id="create-room-btn">創建房間</button>
+                    </div>
+                </div>
+                <aside class="patch-notes-panel">
+                    <h2><i class="fas fa-bullhorn"></i> 遊戲公告 & 更新</h2>
+                    <div class="patch-notes-content">
+                        <p><strong>版本 v2.4 (2025-08-06)</strong></p>
+						<ul>
+                            <li>🐞 <b>【核心】修復調整人數後，預設角色配置未更新的嚴重問題。</b></li>
+                            <li>➕ <b>【核心】擴充備選角色池，房主可自由配置多個忠臣與爪牙。</b></li>
+                            <li>🎨 【顯示】修復房主介面會錯誤顯示「取消準備」按鈕的問題。</li>
+                            <li>🔒 實裝斷線回歸與智慧託管功能。</li>
+                        </ul>
+                        <p style="margin-top:20px;">歡迎體驗！祝您遊戲愉快！</p>
+                    </div>
+                </aside>
+            </main>
+            <footer class="landing-footer">
+                <p>製作者：鮭魚 | 本專案僅為學習用途，無任何商業行為。內容如有侵權，將立即配合移除。</p>
+            </footer>
+        </div>
+
+        <div id="lobby-section" class="hidden">
+            <header class="lobby-header">
+                <h2>房間大廳</h2>
+                <p>房號: <strong id="lobby-room-code" onclick="copyRoomCode()"></strong> (點擊複製)</p>
+            </header>
+            <main class="lobby-main-grid">
+                <div class="player-list-container section">
+                    <h3>房間成員</h3>
+                    <div id="lobby-player-list"></div>
+                </div>
+                <div class="settings-container">
+                    <div class="section" id="host-settings-panel">
+                        <h3>房主設定</h3>
+                        <div class="settings-grid">
+                            <div>
+                                <h4>遊戲選項</h4>
+                                <div class="setting-item">
+                                    <label for="setting-max-players">人數上限</label>
+                                    <select id="setting-max-players" style="width: 120px;">
+                                        <option value="5">5 人</option> <option value="6">6 人</option>
+                                        <option value="7">7 人</option> <option value="8">8 人</option>
+                                        <option value="9">9 人</option> <option value="10">10 人</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item">
+                                    <label for="setting-password">房間密碼</label>
+                                    <input type="text" id="setting-password" placeholder="留空為公開房" style="width: 120px;">
+                                </div>
+                            </div>
+                            <div>
+                                <h4>規則選項</h4>
+                                <div class="setting-item">
+                                    <label for="setting-use-lady">啟用湖中女神</label>
+                                    <label class="switch"><input type="checkbox" id="setting-use-lady"><span class="slider"></span></label>
+                                </div>
+                                <div class="setting-item">
+                                    <label for="setting-randomize-order">隨機玩家順序</label>
+                                    <label class="switch"><input type="checkbox" id="setting-randomize-order"><span class="slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mission-track-panel">
+                            <h4>任務軌跡設定</h4>
+                            <div id="lobby-mission-track" class="lobby-quest-track"></div>
+                        </div>
+                        <div class="role-selection-panel">
+                            <h4>角色配置</h4>
+                            <div class="role-container">
+                                <div class="role-pool" id="selected-roles-pool">
+                                    <h5>當前選用角色 (<span id="selected-roles-count">0</span>)</h5>
+                                    <div id="selected-roles-list"></div>
+                                </div>
+                                <div class="role-pool" id="available-roles-pool">
+                                    <h5>可用角色池</h5>
+                                    <div id="available-roles-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section hidden" id="player-view-panel">
+                        <h3>遊戲資訊</h3>
+                        <div id="lobby-game-info-text"></div>
+                        <div id="player-mission-track" class="lobby-quest-track"></div>
+                    </div>
+                </div>
+            </main>
+            <footer class="lobby-footer">
+                <div class="footer-player-count">
+                    玩家: <span id="lobby-player-count">0</span> / <span id="lobby-max-players">0</span>
+                </div>
+                <div class="footer-actions">
+                    <button id="ready-button" onclick="toggleReady()">準備</button>
+                    <button id="start-game-button" class="hidden" onclick="startGame()">開始遊戲</button>
+                    <button class="secondary" onclick="leaveRoom()">退出房間</button>
+                </div>
+            </footer>
+        </div>
+
+        <div id="game-section" class="hidden">
+            <main class="game-main-grid">
+                <div class="game-players-panel section">
+                    <h3>玩家列表</h3>
+                    <div class="game-player-list" id="game-player-list"></div>
+                </div>
+                <div class="game-info-panel section">
+                    <h3>你的角色資訊</h3>
+                    <p>玩家: <strong id="my-name"></strong></p>
+                    <p>你的身份: <strong id="my-role"></strong></p>
+                    <div id="role-info" class="role-info"></div>
+                    <div class="all-roles-display">
+                        <div class="role-list good">
+                            <h5><i class="fas fa-shield-alt"></i> 好人陣營角色</h5>
+                            <ul id="all-good-roles"></ul>
+                        </div>
+                        <div class="role-list evil">
+                            <h5><i class="fas fa-skull-crossbones"></i> 壞人陣營角色</h5>
+                            <ul id="all-evil-roles"></ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-logs-panel section">
+                    <div class="log-container">
+                        <h4>領導指派與結果</h4>
+                        <div class="log-content" id="proposal-log"></div>
+                    </div>
+                    <div class="log-container">
+                        <h4>隊伍投票詳情</h4>
+                        <div class="log-content" id="team-vote-log"></div>
+                    </div>
+                    <div class="log-container">
+                        <h4>任務投票結果</h4>
+                        <div class="log-content" id="mission-vote-log"></div>
+                    </div>
+                    <div class="mission-track-panel">
+                        <h4>任務軌跡 (<span id="mission-number"></span>/5)</h4>
+                        <div class="game-mission-track" id="game-mission-track"></div>
+                    </div>
+                </div>
+                <div class="game-action-panel section">
+                    <h3 id="action-title">行動指令</h3>
+                    <div id="action-content"></div>
+                </div>
+            </main>
+            <footer style="text-align: center; font-size: 0.9rem; color: #777;">
+                遊戲時間: <strong id="game-timer">00:00</strong>
+            </footer>
+        </div>
+        
+        <div id="end-game-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 id="end-game-title">遊戲結束！</h2>
+                <p>獲勝陣營: <strong id="end-game-winner-team"></strong></p>
+                <p id="end-game-reason"></p>
+                <div id="end-game-details"></div>
+                <p>總遊戲時間: <strong id="end-game-duration"></strong></p>
+                <p><em><span id="end-game-countdown">10</span> 秒後將返回房間...</em></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let appState = {
+        currentView: 'landing',
+        playerName: localStorage.getItem('playerName'),
+        roomCode: localStorage.getItem('roomCode'),
+        token: localStorage.getItem('token'),
+        isHost: false,
+        pollingInterval: null,
+        gameTimerInterval: null,
+        sortableInstance: null,
+        playerMarkers: {},
+        playerOrder: []
+    };
+
+    async function apiCall(endpoint, body) {
+        const payload = { ...body };
+        if (endpoint !== '/create_room' && endpoint !== '/join_room') {
+            payload.token = appState.token;
+            payload.roomCode = appState.roomCode;
+        }
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                if (endpoint !== '/room_state' && endpoint !== '/reconnect') {
+                    alert(`操作失敗: ${errorData.message}`);
+                }
+                if (errorData.message === "玩家身份驗證失敗") {
+                    leaveRoom(true);
+                }
+                return null;
+            }
+            return response.json();
+        } catch (error) {
+            console.error(`連線錯誤: ${error.message}`);
+            return null;
+        }
+    }
+    
+    function switchView(view) {
+        appState.currentView = view;
+        ['landing-section', 'lobby-section', 'game-section', 'end-game-modal'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        const sectionEl = document.getElementById(view + '-section');
+        if (sectionEl) sectionEl.classList.remove('hidden');
+        
+        if (view === 'end') {
+            document.getElementById('end-game-modal').classList.remove('hidden');
+        } else {
+             document.getElementById('end-game-modal').classList.add('hidden');
+        }
+    }
+
+    function saveSession(playerName, roomCode, token) {
+        appState.playerName = playerName;
+        appState.roomCode = roomCode;
+        appState.token = token;
+        localStorage.setItem('playerName', playerName);
+        localStorage.setItem('roomCode', roomCode);
+        localStorage.setItem('token', token);
+    }
+
+    function clearSession() {
+        appState.playerName = null; appState.roomCode = null; appState.token = null;
+        localStorage.removeItem('playerName');
+        localStorage.removeItem('roomCode');
+        localStorage.removeItem('token');
+    }
+
+    async function createRoom() {
+        const playerNameInput = document.getElementById('player-name');
+        let playerName = playerNameInput.value.trim();
+        if (!playerName) { playerNameInput.focus(); alert('請先輸入你的玩家名稱！'); return; }
+        const result = await apiCall('/create_room', { playerName });
+        if (result && result.success) {
+            saveSession(playerName, result.roomCode, result.token);
+            startPolling();
+        }
+    }
+
+    async function joinRoom() {
+        const playerNameInput = document.getElementById('player-name');
+        let playerName = playerNameInput.value.trim();
+        if (!playerName) {
+            const randomNames = ['勇敢的騎士', '神秘的法師', '敏捷的刺客', '忠誠的衛士', '睿智的梅林'];
+            playerName = randomNames[Math.floor(Math.random() * randomNames.length)];
+            playerNameInput.value = playerName;
+        }
+        const roomCode = document.getElementById('room-code').value.trim().toUpperCase();
+        const result = await apiCall('/join_room', { playerName, roomCode });
+        if (result && result.success) {
+            saveSession(playerName, result.roomCode, result.token);
+            startPolling();
+        }
+    }
+
+    async function attemptReconnect() {
+        if (appState.roomCode && appState.token) {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            const data = await apiCall('/reconnect', {});
+            document.getElementById('loading-overlay').classList.add('hidden');
+            if (data) {
+                console.log("重新連線成功！");
+                startPolling();
+            } else {
+                console.log("重新連線失敗，清除舊的 session。");
+                clearSession();
+                switchView('landing');
+            }
+        } else {
+            switchView('landing');
+        }
+    }
+
+    function renderLobby(data) {
+        const me = data.players.find(p => p.token === appState.token);
+        if (!me) { leaveRoom(true); return; }
+        appState.isHost = me.isHost;
+
+        document.getElementById('lobby-room-code').innerText = appState.roomCode;
+        document.getElementById('lobby-player-count').innerText = data.players.length;
+        document.getElementById('lobby-max-players').innerText = data.settings.maxPlayers;
+        renderPlayerList(data.lobbyPlayerOrder, data.players, appState.isHost, data.settings.randomizeOrder);
+
+        document.getElementById('host-settings-panel').classList.toggle('hidden', !appState.isHost);
+        document.getElementById('player-view-panel').classList.toggle('hidden', appState.isHost);
+
+        if (appState.isHost) {
+            initSortable(data.lobbyPlayerOrder, data.settings.randomizeOrder);
+            renderHostSettings(data);
+        } else {
+            if (appState.sortableInstance) {
+                appState.sortableInstance.destroy();
+                appState.sortableInstance = null;
+            }
+            renderPlayerInfo(data);
+        }
+        
+        const startButton = document.getElementById('start-game-button');
+        const readyButton = document.getElementById('ready-button');
+
+        if (appState.isHost) {
+            startButton.classList.remove('hidden');
+            readyButton.classList.add('hidden');
+            const allReady = data.players.every(p => p.isReady);
+            const playerCountCorrect = data.players.length === data.settings.maxPlayers;
+            const rolesCountCorrect = data.settings.customRoles.length === data.players.length;
+            startButton.disabled = !allReady || !playerCountCorrect || !rolesCountCorrect;
+            if (!allReady) startButton.title = "尚有玩家未準備";
+            else if (!playerCountCorrect) startButton.title = "目前玩家人數與房間人數上限不符";
+            else if (!rolesCountCorrect) startButton.title = "目前所選角色數量與玩家人數不符";
+            else startButton.title = "";
+        } else {
+            startButton.classList.add('hidden');
+            readyButton.classList.remove('hidden');
+            readyButton.innerText = me.isReady ? '取消準備' : '準備';
+            readyButton.className = me.isReady ? 'button warning' : 'button success';
+        }
+    }
+    
+    function renderPlayerList(order, players, isHost, isRandomized) {
+        const playerListDiv = document.getElementById('lobby-player-list');
+        playerListDiv.innerHTML = '';
+        order.forEach((name, index) => {
+            const p = players.find(pl => pl.name === name);
+            if (!p) return;
+            const isDisconnected = p.status === 'disconnected';
+            const isSortable = isHost && !isRandomized;
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-list-item' + (isSortable ? ' host-view' : '');
+            playerDiv.dataset.name = p.name;
+            let readyStatus = p.isReady ? '✔️ 已準備' : '...準備中';
+            if (isDisconnected) readyStatus = '已斷線';
+            let readyClass = p.isReady ? 'ready' : 'not-ready';
+            if(p.isHost) { readyStatus = '👑 房主'; readyClass = 'ready'; }
+            let actionsHTML = '';
+            if (isHost && !p.isHost) {
+                actionsHTML = `<div class="player-actions">
+                        <button class="danger" title="踢出玩家" onclick="kickPlayer('${p.name}')"><i class="fas fa-times"></i></button>
+                        <button class="secondary" title="設為房主" onclick="transferHost('${p.name}')"><i class="fas fa-crown"></i></button>
+                    </div>`;
+            }
+            playerDiv.innerHTML = `<span class="player-order">${index + 1}</span>
+                <span class="player-name ${isDisconnected ? 'disconnected' : ''}">${p.isHost ? '<i class="fas fa-crown"></i>' : ''} ${p.name}</span>
+                <span class="player-status ${isDisconnected ? 'disconnected' : ''} ${readyClass}">${readyStatus}</span>
+                ${actionsHTML}`;
+            playerListDiv.appendChild(playerDiv);
+        });
+    }
+
+    function countRoles(roleList) {
+        return roleList.reduce((acc, role) => {
+            acc[role] = (acc[role] || 0) + 1;
+            return acc;
+        }, {});
+    }
+
+    function renderHostSettings(data) {
+        if (!data.all_roles_pool) { console.error("錯誤: 未從伺服器接收到 'all_roles_pool'。"); return; }
+        
+        document.getElementById('setting-max-players').value = data.settings.maxPlayers;
+        document.getElementById('setting-password').value = data.settings.password || '';
+        document.getElementById('setting-use-lady').checked = data.settings.useLady;
+        document.getElementById('setting-randomize-order').checked = data.settings.randomizeOrder;
+        
+        const ladySwitch = document.getElementById('setting-use-lady');
+        ladySwitch.disabled = data.settings.maxPlayers < 7;
+        if (ladySwitch.disabled) ladySwitch.checked = false;
+        
+        renderMissionTrack(data.settings.missionTrack, data.settings.maxPlayers, true);
+        
+        const selectedRoles = data.settings.customRoles;
+        const allRolesPool = [...data.all_roles_pool.good, ...data.all_roles_pool.evil];
+        const selectedCounts = countRoles(selectedRoles);
+        const allCounts = countRoles(allRolesPool);
+        const availableRoles = [];
+        for (const role in allCounts) {
+            const countAvailable = (allCounts[role] || 0) - (selectedCounts[role] || 0);
+            for (let i = 0; i < countAvailable; i++) {
+                availableRoles.push(role);
+            }
+        }
+        
+        const selectedList = document.getElementById('selected-roles-list');
+        const availableList = document.getElementById('available-roles-list');
+        selectedList.innerHTML = '';
+        availableList.innerHTML = '';
+        
+        document.getElementById('selected-roles-count').innerText = selectedRoles.length;
+        document.getElementById('selected-roles-pool').style.borderColor = selectedRoles.length === data.settings.maxPlayers ? 'var(--success-color)' : 'var(--fail-color)';
+        
+        const goodRolesSet = new Set(data.all_roles_pool.good);
+        selectedRoles.forEach(role => {
+            const isEvil = !goodRolesSet.has(role);
+            const tag = document.createElement('span');
+            tag.className = `role-tag ${isEvil ? 'evil' : 'good'}`;
+            tag.innerText = role;
+            tag.onclick = () => moveRole(role, 'remove');
+            selectedList.appendChild(tag);
+        });
+        
+        availableRoles.forEach(role => {
+            const isEvil = !goodRolesSet.has(role);
+            const tag = document.createElement('span');
+            tag.className = `role-tag ${isEvil ? 'evil' : 'good'}`;
+            tag.innerText = role;
+            tag.onclick = () => moveRole(role, 'add');
+            availableList.appendChild(tag);
+        });
+    }
+
+    function renderPlayerInfo(data) {
+        const infoDiv = document.getElementById('lobby-game-info-text');
+        const info = data.gameInfo;
+        if (!info) return;
+        infoDiv.innerHTML = `
+            <h4>當前設定</h4>
+            <p><strong>陣營分佈:</strong> ${info.good_count} 好人 vs ${info.evil_count} 壞人</p>
+            <p><strong>選用角色:</strong> ${info.roles.join(', ')}</p>
+            <h4>任務軌跡</h4>
+        `;
+        renderMissionTrack(data.settings.missionTrack, data.settings.maxPlayers, false, 'player-mission-track');
+    }
+
+    function initSortable(currentOrder, isDisabled) {
+        const el = document.getElementById('lobby-player-list');
+        if (appState.sortableInstance) {
+            appState.sortableInstance.option("disabled", isDisabled);
+        } else if (el) {
+            appState.sortableInstance = Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                disabled: isDisabled,
+                onStart: () => { stopPolling(); },
+                onEnd: function (evt) {
+                    const newOrder = Array.from(el.children).map(item => item.dataset.name);
+                    apiCall('/update_player_order', { newOrder: newOrder }).then(() => { startPolling(); });
+                },
+            });
+        }
+    }
+
+    function updateSettings(isRoleChange = false) {
+        if (!appState.isHost) return;
+        
+        const newSettings = {
+            maxPlayers: parseInt(document.getElementById('setting-max-players').value),
+            password: document.getElementById('setting-password').value.trim(),
+            useLady: document.getElementById('setting-use-lady').checked,
+            randomizeOrder: document.getElementById('setting-randomize-order').checked,
+        };
+
+        if (isRoleChange) {
+            const selectedRoles = Array.from(document.getElementById('selected-roles-list').children).map(t => t.innerText);
+            newSettings.customRoles = selectedRoles;
+        }
+
+        apiCall('/update_settings', { settings: newSettings });
+    }
+
+    function moveRole(role, action) {
+        if (!appState.isHost) return;
+        const selectedRoles = Array.from(document.getElementById('selected-roles-list').children).map(t => t.innerText);
+        let newRoles;
+        if (action === 'add') {
+            newRoles = [...selectedRoles, role];
+        } else if (action === 'remove') {
+            const indexToRemove = selectedRoles.findIndex(r => r === role);
+            if (indexToRemove > -1) {
+                newRoles = [...selectedRoles];
+                newRoles.splice(indexToRemove, 1);
+            } else { newRoles = selectedRoles; }
+        } else { return; }
+        
+        const currentGeneralSettings = getCurrentSettings();
+        apiCall('/update_settings', { settings: { ...currentGeneralSettings, customRoles: newRoles } });
+    }
+    
+    function getCurrentSettings() {
+        return {
+            maxPlayers: parseInt(document.getElementById('setting-max-players').value),
+            password: document.getElementById('setting-password').value.trim(),
+            useLady: document.getElementById('setting-use-lady').checked,
+            randomizeOrder: document.getElementById('setting-randomize-order').checked,
+        };
+    }
+
+    function kickPlayer(targetName) {
+        if (confirm(`確定要將 ${targetName} 踢出房間嗎？`)) { apiCall('/kick_player', { targetName: targetName }); }
+    }
+
+    function transferHost(targetName) {
+        if (confirm(`確定要將房主權限轉移給 ${targetName} 嗎？`)) { apiCall('/transfer_host', { targetName: targetName }); }
+    }
+
+    function toggleReady() { apiCall('/toggle_ready', {}); }
+    
+    function leaveRoom(isKicked = false) {
+        stopPolling();
+        if(appState.roomCode && appState.token && !isKicked) { apiCall('/leave_room', {}); }
+        clearSession();
+        switchView('landing');
+    }
+    
+    function startGame() { 
+        const startButton = document.getElementById('start-game-button');
+        if(startButton && startButton.disabled) {
+            alert(startButton.title || "無法開始遊戲，請檢查條件。");
+            return;
+        }
+        apiCall('/start_game', {}); 
+    }
+    
+    function copyRoomCode() {
+        navigator.clipboard.writeText(appState.roomCode).then(() => { alert(`房號 "${appState.roomCode}" 已複製到剪貼簿！`); });
+    }
+
+    function renderMissionTrack(track, maxPlayers, isHost, containerId = 'lobby-mission-track') {
+        const trackContainer = document.getElementById(containerId);
+        if (!trackContainer) return;
+        trackContainer.innerHTML = '';
+        track.forEach((num, index) => {
+            const marker = document.createElement('div');
+            marker.className = 'lobby-quest-marker';
+            if (isHost) {
+                marker.innerHTML = `<input type="number" value="${num}" min="1" max="${maxPlayers}" onchange="updateMissionTrack(this, ${index})">`;
+            } else { marker.innerHTML = `<span>${num}</span>`; }
+            trackContainer.appendChild(marker);
+        });
+    }
+
+    function updateMissionTrack() {
+        if (!appState.isHost) return;
+        const inputs = document.querySelectorAll('#lobby-mission-track input');
+        const newTrack = Array.from(inputs).map(input => parseInt(input.value) || 1);
+        apiCall('/update_mission_track', { missionTrack: newTrack });
+    }
+
+    function renderGame(data) {
+        const state = data.gameState;
+        const myInfo = state.my_info;
+        document.getElementById('my-name').innerText = appState.playerName;
+        document.getElementById('my-role').innerText = myInfo.role;
+        document.getElementById('role-info').innerHTML = myInfo.role_info || '無特殊情報。';
+        if (myInfo.last_lady_reveal) {
+            document.getElementById('role-info').innerHTML += `<p style="color:blue;font-weight:bold;">${myInfo.last_lady_reveal}</p>`;
+        }
+        document.getElementById('all-good-roles').innerHTML = state.all_possible_roles.good.map(r => `<li>${r}</li>`).join('');
+        document.getElementById('all-evil-roles').innerHTML = state.all_possible_roles.evil.map(r => `<li>${r}</li>`).join('');
+        renderGamePlayerList(state.player_order, state.current_leader, state.team_proposal, data.players, state);
+        renderProposalLog(state.mission_history);
+        renderTeamVoteLog(state.last_vote_details);
+        renderMissionResultLog(state.mission_history);
+        document.getElementById('mission-number').innerText = state.mission_number;
+        renderGameMissionTrack(state.quest_track, state.mission_team_sizes);
+        renderActionSection(state, myInfo);
+        if (!appState.gameTimerInterval && state.game_start_time) {
+            startGameTimer(state.game_start_time);
+        }
+    }
+
+    function renderGamePlayerList(order, leader, proposal, players, state) {
+        const listDiv = document.getElementById('game-player-list');
+        listDiv.innerHTML = '';
+        order.forEach(name => {
+            const p = players.find(pl => pl.name === name);
+            const isDisconnected = p && p.status === 'disconnected';
+            const isLeader = name === leader;
+            const isOnTeam = proposal.includes(name);
+            const markerState = appState.playerMarkers[name] || 0;
+            let voteStatus = '';
+            if (state.phase === 'team_vote' && state.votes[name]) { voteStatus = ' ✔️'; } 
+            else if (state.phase === 'mission_vote' && isOnTeam && state.mission_votes[name]) { voteStatus = ' ✔️'; }
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player-item';
+            if (isOnTeam) playerDiv.style.backgroundColor = 'var(--info-bg)';
+            playerDiv.innerHTML = `
+                <span class="player-name ${isDisconnected ? 'disconnected' : ''}">
+                    ${isLeader ? '<i class="fas fa-crown"></i>' : ''} ${name}
+                    ${isOnTeam ? '<i class="fas fa-gavel"></i>' : ''} ${isDisconnected ? ' (已斷線)' : ''}
+                    <span style="color: var(--success-color); font-weight: bold;">${voteStatus}</span>
+                </span>
+                <div class="player-marker">
+                    <div class="marker-btn good ${markerState === 1 ? 'selected' : ''}" onclick="markPlayer(this, '${name}', 1)"></div>
+                    <div class="marker-btn evil ${markerState === 2 ? 'selected' : ''}" onclick="markPlayer(this, '${name}', 2)"></div>
+                </div>`;
+            listDiv.appendChild(playerDiv);
+        });
+    }
+
+    function renderProposalLog(history) {
+        const logDiv = document.getElementById('proposal-log');
+        if (!history || history.length === 0) { logDiv.innerHTML = '<p>尚無紀錄。</p>'; return; }
+        logDiv.innerHTML = history.map(h => `<p><b>任務 ${h.mission_num} (${h.leader}):</b> 提議 [${h.team.join(', ')}]，結果 <b style="color:${h.result === 'success' ? 'green' : 'red'}">${h.result === 'success' ? '成功' : '失敗'}</b></p>`).join('');
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function renderTeamVoteLog(details) {
+        const logDiv = document.getElementById('team-vote-log');
+        if (!details) { logDiv.innerHTML = '<p>尚無紀錄。</p>'; return; }
+        const approves = details.filter(d => d.vote === 'approve').map(d => d.name).join(', ') || '無';
+        const rejects = details.filter(d => d.vote === 'reject').map(d => d.name).join(', ') || '無';
+        logDiv.innerHTML = `<p><b>同意:</b> ${approves}</p><p><b>反對:</b> ${rejects}</p>`;
+    }
+
+    function renderMissionResultLog(history) {
+        const logDiv = document.getElementById('mission-vote-log');
+        if (!history || history.length === 0) { logDiv.innerHTML = '<p>尚無紀錄。</p>'; return; }
+        logDiv.innerHTML = history.map(h => `<p><b>任務 ${h.mission_num}:</b> 成功 ${h.team.length - h.fails} 票, 失敗 ${h.fails} 票</p>`).join('');
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    
+    function renderGameMissionTrack(track, sizes) {
+        const trackDiv = document.getElementById('game-mission-track');
+        trackDiv.innerHTML = '';
+        track.forEach((status, index) => {
+            const marker = document.createElement('div');
+            marker.className = `game-quest-marker ${status}`;
+            marker.innerText = sizes[index];
+            trackDiv.appendChild(marker);
+        });
+    }
+
+    function renderActionSection(state, myInfo) {
+        const actionDiv = document.getElementById('action-content');
+        const titleDiv = document.getElementById('action-title');
+        titleDiv.innerText = state.phase_text;
+        actionDiv.innerHTML = '';
+
+        if (state.phase === 'team_building' && state.is_leader) {
+            let form = `<p>請選擇 ${state.mission_team_size} 位玩家出任務：</p><div class="checkbox-group">`;
+            state.player_order.forEach(p => {
+                form += `<label><input type="checkbox" name="team" value="${p}" onchange="checkTeamSize(${state.mission_team_size})"><span>${p}</span></label>`;
+            });
+            form += `</div><div class="action-buttons"><button id="propose-btn" onclick="proposeTeam()" disabled>提出隊伍</button></div>`;
+            actionDiv.innerHTML = form;
+        } else if (state.phase === 'team_vote' && !state.my_vote) {
+            actionDiv.innerHTML = `<p>領袖 ${state.current_leader} 提議隊伍: <strong>${state.team_proposal.join(', ')}</strong></p>
+                                   <p>你是否同意這個隊伍出任務？</p>
+                                   <div class="action-buttons">
+                                       <button onclick="performAction('vote_team', {vote: 'approve'})" class="success">✔️ 同意</button>
+                                       <button onclick="performAction('vote_team', {vote: 'reject'})" class="danger">❌ 反對</button>
+                                   </div>`;
+        } else if (state.phase === 'mission_vote' && state.is_on_mission && !state.my_mission_vote) {
+            let buttons = `<button onclick="performAction('mission_vote', {vote: 'success'})" class="success">✅ 成功</button>`;
+            if (myInfo.is_evil) {
+                buttons += `<button onclick="performAction('mission_vote', {vote: 'fail'})" class="danger">❌ 失敗</button>`;
+            }
+            actionDiv.innerHTML = `<p>你是任務成員。請選擇任務結果：</p><div class="action-buttons">${buttons}</div>`;
+        } else if (state.phase === 'lady_of_the_lake' && state.is_lady_holder) {
+            let form = `<p>你是湖中女神的持有者。請選擇一位尚未被查驗的玩家：</p><div class="action-buttons">`;
+            state.player_order.forEach(p => {
+                if (p !== appState.playerName && !state.lady_used_on.includes(p)) {
+                     form += `<button onclick="performAction('use_lady', {target: '${p}'})">${p}</button> `;
+                }
+            });
+            form += `</div>`; actionDiv.innerHTML = form;
+        } else if (state.phase === 'assassination' && myInfo.role === '刺客') {
+            let form = `<p>你是刺客！請猜測誰是梅林來贏得勝利：</p><div class="action-buttons">`;
+            state.player_order.forEach(p => {
+                if (!myInfo.known_evil.includes(p)) {
+                     form += `<button onclick="performAction('assassinate', {target: '${p}'})">${p}</button> `;
+                }
+            });
+            form += `</div>`; actionDiv.innerHTML = form;
+        } else {
+            actionDiv.innerHTML = '<p>等待其他玩家行動...</p>';
+        }
+    }
+
+    function markPlayer(element, name, state) {
+        if (name === appState.playerName) return;
+        const wasSelected = appState.playerMarkers[name] === state;
+        appState.playerMarkers[name] = wasSelected ? 0 : state;
+        const parent = element.parentElement;
+        parent.querySelector('.good').classList.toggle('selected', appState.playerMarkers[name] === 1);
+        parent.querySelector('.evil').classList.toggle('selected', appState.playerMarkers[name] === 2);
+    }
+
+    function checkTeamSize(requiredSize) {
+        const checkedCount = document.querySelectorAll('input[name="team"]:checked').length;
+        document.getElementById('propose-btn').disabled = checkedCount !== requiredSize;
+    }
+
+    function proposeTeam() {
+        const team = Array.from(document.querySelectorAll('input[name="team"]:checked')).map(cb => cb.value);
+        performAction('propose_team', { team });
+    }
+
+    function performAction(action, value) { apiCall('/action', { action, value }); }
+
+    function showEndGameModal(data) {
+        stopPolling();
+        switchView('end');
+        document.getElementById('end-game-title').innerText = `${data.winning_team}勝利！`;
+        document.getElementById('end-game-reason').innerText = data.reason || '';
+        document.getElementById('end-game-winner-team').innerText = data.winning_team;
+        let detailsHTML = '<h4>玩家身份揭曉:</h4>';
+        const goodRolesSet = new Set(Object.values(ROLE_CONFIG).flat(2).filter(role => ["梅林", "派西維爾", "亞瑟的忠臣"].includes(role)));
+        data.all_roles.forEach(p => { 
+            const roleColor = goodRolesSet.has(p.role) ? 'var(--good-color)' : 'var(--evil-color)';
+            detailsHTML += `<p><strong>${p.name}</strong>: <span style="color:${roleColor}">${p.role}</span></p>`; 
+        });
+        document.getElementById('end-game-details').innerHTML = detailsHTML;
+        const duration = data.duration;
+        const minutes = Math.floor(duration / 60000).toString().padStart(2, '0');
+        const seconds = Math.floor((duration % 60000) / 1000).toString().padStart(2, '0');
+        document.getElementById('end-game-duration').innerText = `${minutes}:${seconds}`;
+        let countdown = 10;
+        const countdownSpan = document.getElementById('end-game-countdown');
+        countdownSpan.innerText = countdown;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownSpan.innerText = countdown;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                apiCall('/return_to_lobby', {}).then(() => startPolling());
+            }
+        }, 1000);
+    }
+    
+    function startGameTimer(startTime) {
+        if(appState.gameTimerInterval) clearInterval(appState.gameTimerInterval);
+        appState.gameTimerInterval = setInterval(() => {
+            const duration = new Date().getTime() - startTime;
+            const minutes = Math.floor(duration / 60000).toString().padStart(2, '0');
+            const seconds = Math.floor((duration % 60000) / 1000).toString().padStart(2, '0');
+            document.getElementById('game-timer').innerText = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    function startPolling() {
+        stopPolling();
+        appState.pollingInterval = setInterval(pollServer, 1200);
+        pollServer();
+    }
+
+    function stopPolling() {
+        if (appState.pollingInterval) clearInterval(appState.pollingInterval);
+        if (appState.gameTimerInterval) clearInterval(appState.gameTimerInterval);
+        appState.pollingInterval = null;
+        appState.gameTimerInterval = null;
+    }
+
+    async function pollServer() {
+        if (!appState.roomCode || !appState.token) { stopPolling(); return; }
+        const data = await apiCall('/room_state', {});
+        if (!data) return;
+        if (data.gameState) {
+            if (appState.sortableInstance) { appState.sortableInstance.destroy(); appState.sortableInstance = null; }
+            appState.playerOrder = data.gameState.player_order;
+            if (data.gameState.phase === 'end') {
+                if(appState.currentView !== 'end'){ showEndGameModal(data.gameState.game_over_data); }
+            } else {
+                if (appState.currentView !== 'game') { appState.playerMarkers = {}; switchView('game'); }
+                renderGame(data);
+            }
+        } else {
+            if (appState.gameTimerInterval) { stopPolling(); startPolling(); }
+            if (appState.currentView !== 'lobby') { switchView('lobby'); }
+            renderLobby(data);
+        }
+    }
+    
+    window.onload = () => {
+        document.getElementById('join-room-btn').addEventListener('click', joinRoom);
+        document.getElementById('create-room-btn').addEventListener('click', createRoom);
+        document.getElementById('setting-max-players').addEventListener('change', () => updateSettings(false));
+        document.getElementById('setting-password').addEventListener('change', () => updateSettings(true));
+        document.getElementById('setting-use-lady').addEventListener('change', () => updateSettings(true));
+        document.getElementById('setting-randomize-order').addEventListener('change', () => updateSettings(true));
+        
+        if(localStorage.getItem('playerName')){
+            document.getElementById('player-name').value = localStorage.getItem('playerName');
+        }
+        attemptReconnect();
+    };
+    </script>
+</body>
+</html>
