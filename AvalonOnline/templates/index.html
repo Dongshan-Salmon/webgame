@@ -363,8 +363,7 @@
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 
-                    'Content-Type': 'application/json',
-                    'ngrok-skip-browser-warning': 'true'
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload),
             });
@@ -537,8 +536,6 @@
         });
     }
 
-    // 【★★★ 修正點 1 ★★★】
-    // 為了處理重複角色，需要一個計算角色數量的輔助函式
     function countRoles(roleList) {
         return roleList.reduce((acc, role) => {
             acc[role] = (acc[role] || 0) + 1;
@@ -560,8 +557,6 @@
         
         renderMissionTrack(data.settings.missionTrack, data.settings.maxPlayers, true);
         
-        // 【★★★ 修正點 2 ★★★】
-        // 使用新的計數邏輯來渲染角色池，以正確處理重複角色
         const selectedRoles = data.settings.customRoles;
         const allRolesPool = [...data.all_roles_pool.good, ...data.all_roles_pool.evil];
         const selectedCounts = countRoles(selectedRoles);
@@ -658,8 +653,6 @@
         if (action === 'add') {
             newRoles = [...selectedRoles, role];
         } else if (action === 'remove') {
-            // 【★★★ 修正點 3 ★★★】
-            // 當移除角色時，只移除一個實例，而不是全部
             const indexToRemove = selectedRoles.findIndex(r => r === role);
             if (indexToRemove > -1) {
                 newRoles = [...selectedRoles];
