@@ -14,6 +14,7 @@ rooms_lock = threading.Lock()
 
 # --- 遊戲設定 ---
 TIMEOUT_SECONDS = 10  # 玩家超時時間 (秒)
+LOBBY_KICK_TIMEOUT = 60 # 大廳玩家離線踢除時間 (秒)
 REAP_INTERVAL = 5     # 巡邏員檢查間隔 (秒)
 
 ALL_ROLES = {
@@ -468,11 +469,21 @@ def end_game(room_code, winning_team, reason=""):
     state = rooms[room_code]['gameState']
     state["phase"] = "end"
     state["phase_text"] = "遊戲結束"
+    
+    # 建立一個角色到陣營的映射
+    good_roles_set = set(ALL_ROLES['good'])
+    
+    all_roles_with_faction = []
+    for p, d in state["assigned_roles"].items():
+        role = d["role"]
+        faction = "good" if role in good_roles_set else "evil"
+        all_roles_with_faction.append({"name": p, "role": role, "faction": faction})
+
     state["game_over_data"] = {
         "winning_team": "善良陣營" if winning_team == "good" else "邪惡陣營",
         "reason": reason,
         "duration": time.time() * 1000 - state["game_start_time"],
-        "all_roles": [{"name": p, "role": d["role"]} for p, d in state["assigned_roles"].items()],
+        "all_roles": all_roles_with_faction, # 使用帶有陣營資訊的新列表
     }
 
 def check_game_phase_after_mission(room_code):
@@ -484,7 +495,7 @@ def check_game_phase_after_mission(room_code):
     if state["quest_track"].count("success") >= 3:
         if "刺客" in state["roles_in_game"]:
             state["phase"] = "assassination"; state["phase_text"] = "刺殺階段"
-            return
+            return # <--- 這裡新增 return
         else:
             end_game(room_code, 'good', "好人贏得了 3 個任務 (無刺客)。")
             return
@@ -527,19 +538,34 @@ def reaper_task():
                 players_to_remove = []
                 active_players = 0
 
+                # --- 這是修改後的核心邏輯 ---
                 for player in room['players']:
-                    if current_time - player['last_seen'] > TIMEOUT_SECONDS:
-                        if room['gameState'] is None:
-                            players_to_remove.append(player)
-                        elif player['status'] == 'connected':
-                            player['status'] = 'disconnected'
-                    else:
+                    time_since_seen = current_time - player['last_seen']
+                    is_connected = player['status'] == 'connected'
+
+                    if room['gameState'] is None:  # 處理【大廳中】的玩家
+                        if time_since_seen > LOBBY_KICK_TIMEOUT:
+                            players_to_remove.append(player) # 超過 60 秒，加入踢除列表
+                        elif time_since_seen > TIMEOUT_SECONDS and is_connected:
+                            player['status'] = 'disconnected' # 超過 10 秒，僅標記為離線
+                    
+                    else:  # 處理【遊戲中】的玩家
+                        if time_since_seen > TIMEOUT_SECONDS and is_connected:
+                            player['status'] = 'disconnected' # 超過 10 秒，標記為離線
+                    
+                    if player['status'] == 'connected':
                         active_players += 1
+                # --- 邏輯修改結束 ---
 
                 if players_to_remove:
                     was_host_removed = any(p['isHost'] for p in players_to_remove)
+                    
+                    # ---【BUG修正】保留原始玩家順序 ---
+                    removed_names = {p['name'] for p in players_to_remove}
                     room['players'] = [p for p in room['players'] if p not in players_to_remove]
-                    room['lobbyPlayerOrder'] = [p['name'] for p in room['players']]
+                    room['lobbyPlayerOrder'] = [name for name in room['lobbyPlayerOrder'] if name not in removed_names]
+                    # --- 順序修正結束 ---
+
                     if was_host_removed and room['players']:
                         room['players'][0]['isHost'] = True
                         room['players'][0]['isReady'] = True
