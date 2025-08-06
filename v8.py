@@ -484,6 +484,7 @@ def check_game_phase_after_mission(room_code):
     if state["quest_track"].count("success") >= 3:
         if "刺客" in state["roles_in_game"]:
             state["phase"] = "assassination"; state["phase_text"] = "刺殺階段"
+            return
         else:
             end_game(room_code, 'good', "好人贏得了 3 個任務 (無刺客)。")
             return
