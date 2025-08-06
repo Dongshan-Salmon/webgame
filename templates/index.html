@@ -822,6 +822,9 @@
             });
             form += `</div><div class="action-buttons"><button id="propose-btn" onclick="proposeTeam()" disabled>提出隊伍</button></div>`;
             actionDiv.innerHTML = form;
+            // --- 新增這一行 ---
+            stopPolling(); // 在渲染完選擇介面後，暫停背景同步，防止畫面被刷新
+            // -----------------
         } else if (state.phase === 'team_vote' && !state.my_vote) {
             actionDiv.innerHTML = `<p>領袖 ${state.current_leader} 提議隊伍: <strong>${state.team_proposal.join(', ')}</strong></p>
                                    <p>你是否同意這個隊伍出任務？</p>
@@ -873,6 +876,9 @@
     function proposeTeam() {
         const team = Array.from(document.querySelectorAll('input[name="team"]:checked')).map(cb => cb.value);
         performAction('propose_team', { team });
+	// --- 新增這一行 ---
+        startPolling(); // 提交選擇後，恢復背景同步，以進入投票階段
+        // -----------------
     }
 
     function performAction(action, value) { apiCall('/action', { action, value }); }
