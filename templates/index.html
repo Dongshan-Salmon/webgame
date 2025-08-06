@@ -873,12 +873,14 @@
         document.getElementById('propose-btn').disabled = checkedCount !== requiredSize;
     }
 
-    function proposeTeam() {
+    async function proposeTeam() { // 1. 將函式標記為 async
         const team = Array.from(document.querySelectorAll('input[name="team"]:checked')).map(cb => cb.value);
-        performAction('propose_team', { team });
-	// --- 新增這一行 ---
-        startPolling(); // 提交選擇後，恢復背景同步，以進入投票階段
-        // -----------------
+        
+        // 2. 等待 performAction 執行完畢
+        await performAction('propose_team', { team }); 
+        
+        // 3. 在伺服器確認處理完畢後，才安全地開始輪詢
+        startPolling(); 
     }
 
     function performAction(action, value) { apiCall('/action', { action, value }); }
