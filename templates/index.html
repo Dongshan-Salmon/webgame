@@ -890,18 +890,18 @@
         switchView('end');
         document.getElementById('end-game-title').innerText = `${data.winning_team}勝利！`;
         document.getElementById('end-game-reason').innerText = data.reason || '';
+        // ... 其他程式碼不變 ...
         document.getElementById('end-game-winner-team').innerText = data.winning_team;
         let detailsHTML = '<h4>玩家身份揭曉:</h4>';
-        const goodRolesSet = new Set(Object.values(ROLE_CONFIG).flat(2).filter(role => ["梅林", "派西維爾", "亞瑟的忠臣"].includes(role)));
+
         data.all_roles.forEach(p => { 
-            const roleColor = goodRolesSet.has(p.role) ? 'var(--good-color)' : 'var(--evil-color)';
+        // 直接使用後端提供的 faction 資訊
+            const roleColor = p.faction === 'good' ? 'var(--good-color)' : 'var(--evil-color)';
             detailsHTML += `<p><strong>${p.name}</strong>: <span style="color:${roleColor}">${p.role}</span></p>`; 
         });
+
         document.getElementById('end-game-details').innerHTML = detailsHTML;
-        const duration = data.duration;
-        const minutes = Math.floor(duration / 60000).toString().padStart(2, '0');
-        const seconds = Math.floor((duration % 60000) / 1000).toString().padStart(2, '0');
-        document.getElementById('end-game-duration').innerText = `${minutes}:${seconds}`;
+        // ... 其他程式碼不變 ...
         let countdown = 10;
         const countdownSpan = document.getElementById('end-game-countdown');
         countdownSpan.innerText = countdown;
